@@ -1,7 +1,10 @@
 export default class Nodes {
-    constructor(nodes, onClick, onBackClick) {
+    constructor(isRoot, nodes, onClick, onBackClick) {
         this.wrapperElement = document.querySelector('.Nodes');
-        this.state = nodes;
+        this.state = {
+            nodes: nodes,
+            isRoot: isRoot
+        };
         this.onClick = onClick;
         this.onBackClick = onBackClick;
     }
@@ -21,18 +24,19 @@ export default class Nodes {
                 return;
             }
 
-            const clickedNode = this.state.find(node => node.id === nodeId);
+            const clickedNode = this.state.nodes.find(node => node.id === nodeId);
 
             if(clickedNode) this.onClick(clickedNode);
         }
     }
 
     render() {
+        // 뒤로가기 버튼 처리
         this.wrapperElement.innerHTML = `
-            <div class="Node">
+            ${!this.state.isRoot ? `<div class="Node">
                 <img src="./assets/prev.png" />
-            </div>
-            ${this.state.map((node) => {
+            </div>` : ''}
+            ${this.state.nodes.map((node) => {
                 const fileType = node.type === 'DIRECTORY' ? 'directory' : 'file';
                 return `<div class="Node" data-node-id=${node.id}>
                             <img src="./assets/${fileType}.png" />

@@ -6,7 +6,6 @@ export default class Breadcrumb {
 
     setState(path) {
         if(!path) {
-            if(this.state.length <= 1) return;
             this.state.pop();
         } else {
             this.state.push(path);
