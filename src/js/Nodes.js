@@ -35,7 +35,7 @@ export default class Nodes {
             ${this.state.map((node) => {
                 const fileType = node.type === 'DIRECTORY' ? 'directory' : 'file';
                 return `<div class="Node" data-node-id=${node.id}>
-                            <img src="./assets/${fileType}.png"} />
+                            <img src="./assets/${fileType}.png" />
                             ${node.name}
                         </div>`
             }).join("")}

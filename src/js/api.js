@@ -16,7 +16,7 @@ const api = {
 
     fetchDirectory(nodeId) {
         return request(nodeId);
-    }
+    },
 }
 
 export default api;
