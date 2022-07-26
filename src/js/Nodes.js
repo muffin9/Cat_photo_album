@@ -1,16 +1,16 @@
 export default class Nodes {
-    constructor(isRoot, nodes, onClick, onBackClick) {
-        this.wrapperElement = document.querySelector('.Nodes');
-        this.state = {
-            nodes: nodes,
-            isRoot: isRoot
-        };
+    constructor({$appElement, state, onClick, onBackClick}) {
+        this.state = state
         this.onClick = onClick;
         this.onBackClick = onBackClick;
+        this.wrapperElement = document.createElement('ul');
+        this.wrapperElement.className = 'Nodes';
+        $appElement.appendChild(this.wrapperElement);
     }
 
-    setState = (state) => {
-        this.state = state;
+    setState = (nextState) => {
+        this.state = nextState;
+        this.render();
     }
 
     handleOnClick = ({ target }) => {
@@ -38,10 +38,10 @@ export default class Nodes {
             </div>` : ''}
             ${this.state.nodes.map((node) => {
                 const fileType = node.type === 'DIRECTORY' ? 'directory' : 'file';
-                return `<div class="Node" data-node-id=${node.id}>
+                return `<li class="Node" data-node-id=${node.id}>
                             <img src="./assets/${fileType}.png" />
                             ${node.name}
-                        </div>`
+                        </li>`
             }).join("")}
         `
         this.wrapperElement.addEventListener('click', this.handleOnClick);

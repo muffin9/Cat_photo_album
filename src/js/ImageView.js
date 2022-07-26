@@ -1,21 +1,25 @@
 const API_IMAGE_END_POINT = 'https://fe-dev-matching-2021-03-serverlessdeploymentbuck-t3kpj3way537.s3.ap-northeast-2.amazonaws.com/public'
 
 export default class ImageView {
-    constructor(appElement, filePath) {
-        this.appElement = appElement;
-        this.filePath = filePath;
+    constructor({$appElement, state}) {
+        this.state = state;
+        this.wrapperElement = document.createElement('div');
+        this.wrapperElement.className = 'Modal ImageView';
+
+        $appElement.appendChild(this.wrapperElement);
+    }
+
+    setState(nextState) {
+        this.state = nextState;
+        this.render();
     }
 
     render() {
-        const modalElement = document.createElement('div');
-        modalElement.classList.add('Modal');
-        modalElement.classList.add(this.filePath ? 'ImageViewer' : 'Loading');
-        const imagePath = this.filePath ? `${API_IMAGE_END_POINT}${this.filePath}` : "./assets/nyan-cat.gif";
-        modalElement.innerHTML = `
+        this.wrapperElement.innerHTML = `
             <div class="content">
-                <img src="${imagePath}"/>
+                ${this.state ? `<img src="${API_IMAGE_END_POINT}${this.state}"/>` : ''}
             </div>
         `
-        this.appElement.appendChild(modalElement);
+        this.wrapperElement.style.display = this.state ? 'block' : 'none';
     }
 }

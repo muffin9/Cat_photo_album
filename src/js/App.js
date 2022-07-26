@@ -4,89 +4,160 @@ import ImageView from './ImageView.js';
 import api from './api.js';
 import Loading from './Loading.js';
 
-const App = async () => {
-    const appElement = document.querySelector('.App');
-    const memo = {};
-    const pathsData = [];
-    const loading = new Loading();
-    let catsData = [];
+const memo = {};
 
-    // 맨 처음 애플리케이션 로드시
-    const breadcrumb = new Breadcrumb();
-    pathsData.push('root');
-    breadcrumb.setState('root');
-    breadcrumb.render();
-
-
-    // api 초기 요청 이후 데이터 셋팅.
-    loading.setState(true);
-    catsData = await api.fetchRoot();
-    memo['root'] = catsData;
-    loading.setState(false);
-
-
-    const handleOnBackClick = async () => {
-        pathsData.pop();
-
-        let nodeId = pathsData[pathsData.length - 1];
-
-        breadcrumb.setState();
-        breadcrumb.render();
-
-        loading.setState(true);
-        if(memo[nodeId]) {
-            catsData = memo[nodeId];
-        } else {
-            catsData = await api.fetchDirectory(nodeId);
-            memo[nodeId] = catsData;
-        }
-        loading.setState(false);
-
-        // isRoot 처리
-        nodes.setState({nodes: catsData, isRoot: nodeId === 'root' ? true: false});
-        nodes.render();
+function App($appElement) {
+    this.state = {
+        isRoot: false,
+        depth: [],
+        loading: false,
+        nodes: [],
+        selectedImage: null
     }
 
-    const nodes = new Nodes(true, catsData, (node) => handleNodeOnClick(node), handleOnBackClick);
-    nodes.render();
+    this.setState = (nextState) => {
+        this.state = nextState
+        breadcrumb.setState(this.state.depth);
+        nodes.setState({
+            isRoot: this.state.isRoot,
+            nodes: this.state.nodes
+        });
+        imageView.setState(this.state.selectedImage);
+        loading.setState(this.state.isLoading);
+    }
+
+    const loading = new Loading({$appElement, state: this.state.loading});
+
+    const breadcrumb = new Breadcrumb({
+        $appElement,
+        state: this.state.depth
+    });
 
     const handleNodeOnClick = async (node) => {
-        if(node.type === 'DIRECTORY') {
-            const nodeId = node.id;
-            if(!nodeId) return;
-
-            pathsData.push(nodeId);
-            breadcrumb.setState(node.name);
-            breadcrumb.render();
-            // 요청한 api 기반으로 nodes 컴포넌트 다시 그려주기.
-            loading.setState(true);
-            console.log(memo);
-            if(memo[nodeId]) {
-                catsData = memo[nodeId];
-            } else {
-                catsData = await api.fetchDirectory(node.id);
-                memo[nodeId] = catsData;
+        try {   
+            if(node.type === 'DIRECTORY') {
+                this.setState({
+                    ...this.state,
+                    isLoading: true
+                });
+                if(memo[node.id]) {
+                    this.setState({
+                        ...this.state,
+                        isRoot: false,
+                        depth: [...this.state.depth, node],
+                        nodes: memo[node.id]
+                    });
+                } else {
+                    const nextNodes = await api.fetchDirectory(node.id);
+                    this.setState({
+                        ...this.state,
+                        isRoot: false,
+                        depth: [...this.state.depth, node],
+                        nodes: nextNodes
+                    });
+                    memo[node.id] = nextNodes;
+                }
+            } else if(node.type === 'FILE') {
+                // ImageView Popup 띄우기.
+                this.setState({
+                    ...this.state,
+                    selectedImage: node.filePath
+                })
             }
-            loading.setState(false);
-
-            nodes.setState({nodes: catsData, isRoot: false});
-            nodes.render();
-        } else if(node.type === 'FILE') {
-            // ImageView Popup 띄우기.
-            const clickedImageView = new ImageView(appElement, node.filePath);
-            clickedImageView.render();
+        } catch(e) {
+            throw new Error(e.message);
+        } finally {
+            this.setState({
+                ...this.state,
+                isLoading: false
+            })
         }
-    }
+    };
+
+    const handleOnBackClick = async () => {
+        try{
+            const nextState = { ...this.state }
+            nextState.depth.pop();
+
+            const prevNodeId = nextState.depth.length === 0 ? null : nextState.depth[nextState.depth.length - 1].id;
+
+            this.setState({
+                ...this.state,
+                isLoading: true
+            })
+            if(prevNodeId == null) {
+                this.setState({
+                    ...nextState,
+                    isRoot: true,
+                    nodes: memo.root
+                });
+            } else {
+                this.setState({
+                    ...nextState,
+                    isRoot: false,
+                    nodes: memo.prevNodeId
+                })
+            }
+
+        } catch(e) {
+            throw new Error(e.message);
+        } finally {
+            this.setState({
+                ...this.state,
+                isLoading: false
+            })
+        }
+    };
+
+    const nodes = new Nodes({
+        $appElement,
+        state:{
+            isRoot: this.state.isRoot,
+            nodes: this.state.nodes
+        },
+        onClick : (node) => handleNodeOnClick(node),
+        onBackClick: () => handleOnBackClick()
+    });
+
+    const imageView = new ImageView({
+        $appElement,
+        state: this.state.selectedImage
+    });
 
     const handleOutSideClick = ({ target }) => {
-        const targetElement = target.closest('.ImageViewer');
+        const targetElement = target.closest('.ImageView');
         if(targetElement) {
-            document.querySelector('.ImageViewer').remove();
+            document.querySelector('.ImageView').style.display = 'none';
         }
         return;
-    }
+    };
 
-    appElement.addEventListener('click', handleOutSideClick);
+    const init = async () => {
+        try {
+            $appElement.addEventListener('click', handleOutSideClick);
+            // api 초기 요청 이후 데이터 셋팅.
+            this.setState({
+                ...this.state,
+                isLoading: true
+            })
+            const rootNodes = await api.fetchRoot();
+            this.setState({
+                ...this.state,
+                isRoot: true,
+                nodes: rootNodes,
+            })
+            memo.root = rootNodes;
+        } catch(e) {
+            throw new Error(e.message);
+        } finally {
+            this.setState({
+                ...this.state,
+                isLoading: false
+            })
+        }
+    };
+
+    init();
 }
 
 export default App;

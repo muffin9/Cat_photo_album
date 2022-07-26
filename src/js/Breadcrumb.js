@@ -1,21 +1,21 @@
 export default class Breadcrumb {
-    constructor() {
-        this.wrapperElement = document.querySelector('.Breadcrumb');
-        this.state = [];
+    constructor({$appElement, state}) {
+        this.state = state;
+        this.wrapperElement = document.createElement('nav');
+        this.wrapperElement.className = 'Breadcrumb';
+        $appElement.appendChild(this.wrapperElement);
     }
 
-    setState(path) {
-        if(!path) {
-            this.state.pop();
-        } else {
-            this.state.push(path);
-        }
+    setState(nextState) {
+        this.state = nextState;
+        this.render();
     }
 
     render() {
         this.wrapperElement.innerHTML = `
-            ${this.state.map((path) => {
-                return `<div>${path}</div>`
+        <div>root</div>
+            ${this.state.map((node) => {
+                return `<div>${node.name}</div>`
             }).join("")}
         `
     }

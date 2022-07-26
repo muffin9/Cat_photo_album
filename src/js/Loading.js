@@ -1,23 +1,23 @@
 export default class Loading {
-    constructor() {
-        this.wrapperElement = document.querySelector('.loading');
-        this.state = false;
+    constructor({$appElement, state}) {
+        this.wrapperElement = document.createElement('div');
+        this.state = state;
+
+        this.wrapperElement.className = 'Loading Modal';
+        $appElement.appendChild(this.wrapperElement);
     }
 
-    setState(state) {
-        this.state = state;
+    setState(nextState) {
+        this.state = nextState;
         this.render();
     }
 
     render() {
-        if(this.state) {
-            this.wrapperElement.innerHTML = `
+        this.wrapperElement.innerHTML = `
             <div class="Modal">
                 <img src='./assets/nyan-cat.gif' />
             </div>
             `
-        } else {
-            this.wrapperElement.innerHTML = '';
-        }
+        this.wrapperElement.style.display = this.state ? 'block' : 'none';
     };
 }
