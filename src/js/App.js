@@ -127,7 +127,10 @@ function App($appElement) {
     const handleOutSideClick = ({ target }) => {
         const targetElement = target.closest('.ImageView');
         if(targetElement) {
-            document.querySelector('.ImageView').style.display = 'none';
+            this.setState({
+                ...this.state,
+                selectedImage: null
+            })
         }
         return;
     };
